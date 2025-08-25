@@ -12,7 +12,8 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.56yvv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -25,34 +26,72 @@ const client = new MongoClient(uri, {
 // Connect to MongoDB
 async function run() {
   try {
+    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    console.log("✅ Connected to MongoDB");
 
-    const db = client.db("myDatabase");
-    const petsCollection = db.collection("pets");
+    // ! database collections
+    const db = client.db("ReferralHut-Db");
 
-    // Routes
-    app.get("/", (req, res) => {
-      res.send("Hello from Node.js + Express + MongoDB Server 🚀");
+    const usersCollection = db.collection("users");
+
+    // ! Unique ID Generator Function
+
+    const generateUniqueId = async () => {
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      while (attempts < maxAttempts) {
+     const uniqueId = Math.floor(100000 + Math.random() * 900000);
+
+
+        const existingUser = await usersCollection.findOne({
+          uniqueId: uniqueId,
+        });
+
+        if (!existingUser) {
+          return uniqueId;
+        }
+        attempts++;
+      }
+
+      throw new Error("Could not generate unique ID after maximum attempts");
+    };
+
+    //! ------------------- user related api
+
+    app.post("/api/referral-creat-users", async (req, res) => {
+      const userData = req.body;
+
+      // genarate unique id
+      const uniqueId = await generateUniqueId();
+
+      // userData তে uniqueId যোগ করুন
+      userData.uniqueId = uniqueId;
+
+      const result = await usersCollection.insertOne(userData);
+      res.send(result);
     });
 
-    // Example: Get all pets
-    app.get("/pets", async (req, res) => {
-      const pets = await petsCollection.find().toArray();
-      res.json(pets);
+    app.get("/api/referral-get-users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
     });
 
-    // Example: Add new pet
-    app.post("/add-pet", async (req, res) => {
-      const pet = req.body;
-      const result = await petsCollection.insertOne(pet);
-      res.json(result);
-    });
-  } catch (err) {
-    console.error(err);
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
+  } finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
   }
 }
 run().catch(console.dir);
+
+app.get("/", async (req, res) => {
+  res.send("server is running");
+});
 
 // Start server
 app.listen(port, () => {
