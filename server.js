@@ -199,9 +199,7 @@ app.patch("/api/cancel-deposite-status/:id", async (req, res) => {
 
 app.post("/api/payment", async (req, res) => {
         const data = req.body;
-      console.log(data);
-      
-
+   
         const result = await paymentCollection.insertOne(data);
         res.send(result)
    })
