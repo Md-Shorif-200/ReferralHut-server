@@ -33,6 +33,7 @@ async function run() {
 
     const usersCollection = db.collection("users");
     const depositCollection = db.collection("all-deposit");
+    const paymentCollection = db.collection("all-payment");
 
     // Create a unique index for uniqueId to prevent duplicates
     await usersCollection.createIndex({ uniqueId: 1 }, { unique: true });
@@ -192,6 +193,22 @@ app.patch("/api/cancel-deposite-status/:id", async (req, res) => {
 });
 
 
+
+// ! payment  api
+
+app.post("/api/payment", async (req, res) => {
+        const data = req.body;
+
+        const result = await paymentCollection.insertOne(data);
+        res.send(result)
+   })
+
+
+      app.get("/api/payment", async (req, res) => {
+
+        const result = await paymentCollection.find().toArray();
+        res.send(result)
+   })
 
    
 
