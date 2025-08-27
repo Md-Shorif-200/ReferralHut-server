@@ -130,7 +130,27 @@ async function run() {
       }
     });
 
+// ------------------------get user----------------------------
+app.get("/user/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
 
+    // Find the user by email
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Return only the user
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
     // --------------- deposite ---------------
 
@@ -210,6 +230,22 @@ app.post("/api/payment", async (req, res) => {
         const result = await paymentCollection.find().toArray();
         res.send(result)
    })
+   
+app.get("/api/payments", async (req, res) => {
+  try {
+    const payments = await paymentCollection.find().toArray();
+    res.status(200).send({
+      success: true,
+       payments,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Failed to fetch payments",
+      error: error.message,
+    });
+  }
+});
 
    
 
